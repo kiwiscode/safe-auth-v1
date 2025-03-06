@@ -5,6 +5,7 @@ const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
 
 const cors = require("cors");
+const { NODE_ENV, APP_ORIGIN } = require("../constants/env");
 
 module.exports = (app) => {
   app.set("trust proxy", 1);
@@ -14,7 +15,7 @@ module.exports = (app) => {
 
   app.use(helmet());
 
-  if (process.env.NODE_ENV === "production") {
+  if (NODE_ENV === "production") {
     app.use(
       rateLimit({
         windowMs: 15 * 60 * 1000, // 15 minutes
@@ -44,7 +45,7 @@ module.exports = (app) => {
   // CORS MIDDLEWARE INSIDE module.exports TO ALLOW CROSS-ORIGIN INTERACTION:
   app.use(
     cors({
-      origin: process.env.APP_ORIGIN,
+      origin: APP_ORIGIN,
     })
   );
 };

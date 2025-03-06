@@ -4,7 +4,9 @@ const morgan = require("morgan");
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
 
+const cookieParser = require("cookie-parser");
 const cors = require("cors");
+
 const { NODE_ENV, APP_ORIGIN } = require("../constants/env");
 
 module.exports = (app) => {
@@ -46,6 +48,8 @@ module.exports = (app) => {
   app.use(
     cors({
       origin: APP_ORIGIN,
+      credentials: true,
     })
   );
+  app.use(cookieParser());
 };

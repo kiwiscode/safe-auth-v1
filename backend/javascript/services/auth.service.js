@@ -10,9 +10,13 @@ const SessionModel = require("../models/session.model");
 const UserModel = require("../models/user.model");
 const VerificationCodeModel = require("../models/verificationCode.model");
 const appAssert = require("../utils/appAssert");
-const { oneYearFromNow } = require("../utils/date");
+const { oneYearFromNow, ONE_DAY_MS } = require("../utils/date");
 const { getVerifyEmailTemplate } = require("../utils/emailTemplates");
-const { refreshTokenSignOptions, signToken } = require("../utils/jwt");
+const {
+  refreshTokenSignOptions,
+  signToken,
+  verifyToken,
+} = require("../utils/jwt");
 const sendMail = require("../utils/sendEmail");
 
 const createAccount = async (data) => {
@@ -131,8 +135,50 @@ const verifyEmail = async (code) => {
   };
 };
 
+const refreshUserAccessToken = async (refreshToken) => {
+  const { payload } = verifyToken(refreshToken, {
+    secret: refreshTokenSignOptions.secret,
+  });
+  appAssert(payload, UNAUTHORIZED, "Invalid refresh token");
+
+  const session = await SessionModel.findById(payload.sessionId);
+  const now = Date.now();
+  appAssert(
+    session && session.expiresAt.getTime() > now,
+    UNAUTHORIZED,
+    "Session expired"
+  );
+
+  // refresh the session if it expires in the next 24hrs
+  const sessionNeedsRefresh = session.expiresAt.getTime() - now <= ONE_DAY_MS;
+  if (sessionNeedsRefresh) {
+    session.expiresAt = thirtyDaysFromNow();
+    await session.save();
+  }
+
+  const newRefreshToken = sessionNeedsRefresh
+    ? signToken(
+        {
+          sessionId: session._id,
+        },
+        refreshTokenSignOptions
+      )
+    : undefined;
+
+  const accessToken = signToken({
+    userId: session.userId,
+    sessionId: session._id,
+  });
+
+  return {
+    accessToken,
+    newRefreshToken,
+  };
+};
+
 module.exports = {
   createAccount,
   loginUser,
   verifyEmail,
+  refreshUserAccessToken,
 };

@@ -276,29 +276,3 @@ export const resetPassword = async ({
 
   return { user: updatedUser.omitPassword() };
 };
-
-// // start to check
-
-// import { Resend } from "resend";
-// import dotenv from "dotenv";
-
-// dotenv.config();
-
-// const resend = new Resend(process.env.RESEND_API_KEY);
-
-// async function sendEmail() {
-//   try {
-//     const response = await resend.emails.send({
-//       from: "Your Name <onboarding@resend.dev>",
-//       to: ["ayktkav@gmail.com"], // Alıcı e-posta adresi
-//       subject: "Merhaba!",
-//       html: "<strong>Bu bir test e-postasıdır.</strong>",
-//     });
-
-//     console.log("E-posta başarıyla gönderildi:", response);
-//   } catch (error) {
-//     console.error("E-posta gönderme hatası:", error);
-//   }
-// }
-
-// sendEmail();

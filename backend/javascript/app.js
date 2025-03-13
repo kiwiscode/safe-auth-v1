@@ -13,9 +13,15 @@ app.get("/", (_, res) => {
   });
 });
 
+// routes
 const authRoutes = require("./routes/auth.route");
+const userRoutes = require("./routes/user.route");
+const authenticate = require("./middleware/authenticate");
 
 app.use("/auth", authRoutes);
+
+// protected routes
+app.use("/user", authenticate, userRoutes);
 
 app.use(errorHandler);
 

@@ -1,11 +1,17 @@
-const { CREATED, OK } = require("../constants/http");
+const { CREATED, OK, UNAUTHORIZED } = require("../constants/http");
 const {
   createAccount,
   loginUser,
   verifyEmail,
+  refreshUserAccessToken,
 } = require("../services/auth.service");
 const catchErrors = require("../utils/catchErrors");
-const { setAuthCookies, clearAuthCookies } = require("../utils/cookies");
+const {
+  setAuthCookies,
+  clearAuthCookies,
+  getRefreshTokenCookieOptions,
+  getAccessTokenCookieOptions,
+} = require("../utils/cookies");
 const { verifyToken } = require("../utils/jwt");
 const SessionModel = require("../models/session.model");
 
@@ -14,6 +20,7 @@ const {
   loginSchema,
   verificationCodeSchema,
 } = require("./auth.schemas");
+const appAssert = require("../utils/appAssert");
 
 const registerHandler = catchErrors(async (req, res) => {
   const request = registerSchema.parse({
@@ -37,6 +44,23 @@ const loginHandler = catchErrors(async (req, res) => {
   return setAuthCookies({ res, accessToken, refreshToken })
     .status(OK)
     .json({ message: "Login successful" });
+});
+
+const refreshHandler = catchErrors(async (req, res) => {
+  const refreshToken = req.cookies.refreshToken;
+
+  appAssert(refreshToken, UNAUTHORIZED, "Missing refresh token");
+
+  const { accessToken, newRefreshToken } = await refreshUserAccessToken(
+    refreshToken
+  );
+  if (newRefreshToken) {
+    res.cookie("refreshToken", newRefreshToken, getRefreshTokenCookieOptions());
+  }
+  return res
+    .status(OK)
+    .cookie("accessToken", accessToken, getAccessTokenCookieOptions())
+    .json({ message: "Access token refreshed" });
 });
 
 const logoutHandler = catchErrors(async (req, res) => {
@@ -67,6 +91,7 @@ const verifyEmailHandler = catchErrors(async (req, res) => {
 module.exports = {
   registerHandler,
   loginHandler,
+  refreshHandler,
   logoutHandler,
   verifyEmailHandler,
 };

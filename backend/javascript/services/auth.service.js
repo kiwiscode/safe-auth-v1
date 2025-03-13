@@ -1,5 +1,10 @@
 const { APP_ORIGIN } = require("../constants/env");
-const { CONFLICT } = require("../constants/http");
+const {
+  CONFLICT,
+  UNAUTHORIZED,
+  INTERNAL_SERVER_ERROR,
+  NOT_FOUND,
+} = require("../constants/http");
 const VerificationCodeType = require("../constants/verificationCodeType");
 const SessionModel = require("../models/session.model");
 const UserModel = require("../models/user.model");
@@ -72,6 +77,62 @@ const createAccount = async (data) => {
   };
 };
 
+const loginUser = async ({ email, password, userAgent }) => {
+  const user = await UserModel.findOne({ email });
+  appAssert(user, UNAUTHORIZED, "Invalid email or password");
+
+  const isValid = await user.comparePassword(password);
+  appAssert(isValid, UNAUTHORIZED, "Invalid email or password");
+
+  const userId = user._id;
+  const session = await SessionModel.create({
+    userId,
+    userAgent,
+  });
+
+  const sessionInfo = {
+    sessionId: session._id,
+  };
+
+  const refreshToken = signToken(sessionInfo, refreshTokenSignOptions);
+  const accessToken = signToken({
+    ...sessionInfo,
+    userId,
+  });
+
+  return {
+    user: user.omitPassword(),
+    accessToken,
+    refreshToken,
+  };
+};
+
+const verifyEmail = async (code) => {
+  const validCode = await VerificationCodeModel.findOne({
+    _id: code,
+    type: VerificationCodeType.EmailVerification,
+    expiresAt: { $gt: new Date() },
+  });
+  appAssert(validCode, NOT_FOUND, "Invalid or expired verification code");
+
+  const updatedUser = await UserModel.findByIdAndUpdate(
+    validCode.userId,
+    {
+      verified: true,
+    },
+    { new: true }
+  );
+  appAssert(updatedUser, INTERNAL_SERVER_ERROR, "Failed to verify email");
+
+  await validCode.deleteOne();
+
+  return {
+    user: updatedUser.omitPassword(),
+  };
+};
+
 module.exports = {
   createAccount,
+  loginUser,
+  verifyEmail,
 };

@@ -8,10 +8,10 @@ const getEnv = (key, defaultValue) => {
   return value;
 };
 
-const PORT = getEnv("PORT", "3000");
 const NODE_ENV = getEnv("NODE_ENV", "development");
-const APP_ORIGIN = getEnv("APP_ORIGIN");
+const PORT = getEnv("PORT", "3000");
 const MONGO_URI = getEnv("MONGO_URI");
+const APP_ORIGIN = getEnv("APP_ORIGIN");
 const JWT_SECRET = getEnv("JWT_SECRET");
 const JWT_REFRESH_SECRET = getEnv("JWT_REFRESH_SECRET");
 const EMAIL_SENDER = getEnv("EMAIL_SENDER");

@@ -1,8 +1,11 @@
+require("dotenv").config();
+
 const express = require("express");
 const app = express();
 const errorHandler = require("./middleware/errorHandler");
 
-require("dotenv").config();
+const authenticate = require("./middleware/authenticate");
+
 require("./db");
 require("./config")(app);
 
@@ -16,12 +19,13 @@ app.get("/", (_, res) => {
 // routes
 const authRoutes = require("./routes/auth.route");
 const userRoutes = require("./routes/user.route");
-const authenticate = require("./middleware/authenticate");
+const sessionRoutes = require("./routes/session.route");
 
 app.use("/auth", authRoutes);
 
 // protected routes
 app.use("/user", authenticate, userRoutes);
+app.use("/sessions", authenticate, sessionRoutes);
 
 app.use(errorHandler);
 

@@ -4,6 +4,7 @@ const {
   loginUser,
   verifyEmail,
   refreshUserAccessToken,
+  sendPasswordResetEmail,
 } = require("../services/auth.service");
 const catchErrors = require("../utils/catchErrors");
 const {
@@ -19,6 +20,7 @@ const {
   registerSchema,
   loginSchema,
   verificationCodeSchema,
+  emailSchema,
 } = require("./auth.schemas");
 const appAssert = require("../utils/appAssert");
 
@@ -88,10 +90,19 @@ const verifyEmailHandler = catchErrors(async (req, res) => {
   return res.status(OK).json({ message: "Email was successfully verified" });
 });
 
+const sendPasswordResetHandler = catchErrors(async (req, res) => {
+  const email = emailSchema.parse(req.body.email);
+
+  await sendPasswordResetEmail(email);
+
+  return res.status(OK).json({ message: "Password reset email sent" });
+});
+
 module.exports = {
   registerHandler,
   loginHandler,
   refreshHandler,
   logoutHandler,
   verifyEmailHandler,
+  sendPasswordResetHandler,
 };

@@ -4,6 +4,7 @@ const {
   UNAUTHORIZED,
   INTERNAL_SERVER_ERROR,
   NOT_FOUND,
+  TOO_MANY_REQUESTS,
 } = require("../constants/http");
 const VerificationCodeType = require("../constants/verificationCodeType");
 const SessionModel = require("../models/session.model");

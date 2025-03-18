@@ -27,6 +27,7 @@ const {
   verifyToken,
 } = require("../utils/jwt");
 const sendMail = require("../utils/sendEmail");
+const { hashValue } = require("../utils/bcrypt");
 
 const createAccount = async (data) => {
   // verify email is not taken
@@ -236,10 +237,32 @@ const sendPasswordResetEmail = async (email) => {
   }
 };
 
+const resetPassword = async ({ verificationCode, password }) => {
+  const validCode = await VerificationCodeModel.findOne({
+    _id: verificationCode,
+    type: VerificationCodeType.PasswordReset,
+    expiresAt: { $gt: new Date() },
+  });
+  appAssert(validCode, NOT_FOUND, "Invalid or expired verification code");
+
+  const updatedUser = await UserModel.findByIdAndUpdate(validCode.userId, {
+    password: await hashValue(password),
+  });
+  appAssert(updatedUser, INTERNAL_SERVER_ERROR, "Failed to reset password");
+
+  await validCode.deleteOne();
+
+  // delete all sessions
+  await SessionModel.deleteMany({ userId: validCode.userId });
+
+  return { user: updatedUser.omitPassword() };
+};
+
 module.exports = {
   createAccount,
   loginUser,
   verifyEmail,
   refreshUserAccessToken,
   sendPasswordResetEmail,
+  resetPassword,
 };

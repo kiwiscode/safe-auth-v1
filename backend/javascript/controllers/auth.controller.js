@@ -5,6 +5,7 @@ const {
   verifyEmail,
   refreshUserAccessToken,
   sendPasswordResetEmail,
+  resetPassword,
 } = require("../services/auth.service");
 const catchErrors = require("../utils/catchErrors");
 const {
@@ -21,6 +22,7 @@ const {
   loginSchema,
   verificationCodeSchema,
   emailSchema,
+  resetPasswordSchema,
 } = require("./auth.schemas");
 const appAssert = require("../utils/appAssert");
 
@@ -98,6 +100,16 @@ const sendPasswordResetHandler = catchErrors(async (req, res) => {
   return res.status(OK).json({ message: "Password reset email sent" });
 });
 
+const resetPasswordHandler = catchErrors(async (req, res) => {
+  const request = resetPasswordSchema.parse(req.body);
+
+  await resetPassword(request);
+
+  return clearAuthCookies(res)
+    .status(OK)
+    .json({ message: "Password was reset successfully" });
+});
+
 module.exports = {
   registerHandler,
   loginHandler,
@@ -105,4 +117,5 @@ module.exports = {
   logoutHandler,
   verifyEmailHandler,
   sendPasswordResetHandler,
+  resetPasswordHandler,
 };
